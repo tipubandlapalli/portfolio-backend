@@ -4,6 +4,6 @@ app = FastAPI()
 
 @app.get("/")
 def root():
-    return "hello dear: happy coding"
+    return "hello dear: happy coding dear"
 
 
