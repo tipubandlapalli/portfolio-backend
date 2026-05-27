@@ -23,7 +23,7 @@ jobs:
           script: |
             set -e
 
-            cd ~/books-project
+            cd ~/portfolio-backend
 
             git pull origin main
 
