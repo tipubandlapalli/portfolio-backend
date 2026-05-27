@@ -21,18 +21,17 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
           script: |
-            script: |
-              set -e
+            set -e
 
-              cd ~/books-project
+            cd ~/books-project
 
-              git pull origin main
+            git pull origin main
 
-              source venv/bin/activate
-              pip install -r requirements.txt
+            source venv/bin/activate
+            pip install -r requirements.txt
 
-              ps aux | grep "uvicorn src.main:app" | grep -v grep | awk '{print $2}' | xargs -r kill
-              sleep 2
+            ps aux | grep "uvicorn src.main:app" | grep -v grep | awk '{print $2}' | xargs -r kill
+            sleep 2
 
-              nohup uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload > app.log 2>&1 < /dev/null &
+            nohup uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload > app.log 2>&1 < /dev/null &
 
