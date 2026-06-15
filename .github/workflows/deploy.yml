@@ -1,3 +1,40 @@
+# name: Deploy to EC2
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+
+#       - name: Deploy
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.EC2_HOST }}
+#           username: ${{ secrets.EC2_USER }}
+#           key: ${{ secrets.EC2_SSH_KEY }}
+#           port: ${{ secrets.EC2_PORT }}
+#           script: |
+#             set -e
+
+#             cd ~/portfolio-backend
+
+#             git pull origin main
+
+#             source venv/bin/activate
+#             pip install -r requirements.txt
+
+#             ps aux | grep "uvicorn src.main:app" | grep -v grep | awk '{print $2}' | xargs -r kill
+#             sleep 2
+
+#             nohup uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload > app.log 2>&1 < /dev/null &
+
 name: Deploy to EC2
 
 on:
@@ -27,11 +64,30 @@ jobs:
 
             git pull origin main
 
-            source venv/bin/activate
-            pip install -r requirements.txt
+            # Create pdfs directory if it doesn't exist
+            mkdir -p pdfs
 
-            ps aux | grep "uvicorn src.main:app" | grep -v grep | awk '{print $2}' | xargs -r kill
+            # Install poppler-utils for pdftotext if not already installed
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+
+            # Create virtual environment if it doesn't exist
+            if [ ! -d "venv" ]; then
+                python3 -m venv venv
+            fi
+
+            # Activate virtual environment
+            source venv/bin/activate
+
+            # No pip install needed as only standard library is used
+
+            # Kill existing server process
+            ps aux | grep "python.*pdf_search_server.py" | grep -v grep | awk '{print $2}' | xargs -r kill
+            # Also kill any old uvicorn processes if they exist
+            ps aux | grep "uvicorn" | grep -v grep | awk '{print $2}' | xargs -r kill
             sleep 2
 
-            nohup uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload > app.log 2>&1 < /dev/null &
+            # Run the new PDF search server
+            nohup python3 pdf_search_server.py --host 127.0.0.1 --port 8000 > app.log 2>&1 < /dev/null &
 
+            echo "Deployment complete! Server running on port 8000" 
